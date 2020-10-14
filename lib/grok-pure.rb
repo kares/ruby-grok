@@ -40,7 +40,6 @@ class Grok
   GROK_ERROR_PCRE_ERROR = 6
   GROK_ERROR_NOMATCH = 7
 
-  public
   def initialize
     @patterns = {}
     @logger = NullLogger::INSTANCE
@@ -50,14 +49,12 @@ class Grok
     @captures_func = nil
   end # def initialize
 
-  public
   def add_pattern(name, pattern)
     trace { "Adding pattern #{name} => #{pattern.inspect}" }
     @patterns[name] = pattern
     return nil
   end # def add_pattern
 
-  public
   def add_patterns_from_file(path)
     file = File.new(path, "r")
     file.each do |line|
@@ -66,7 +63,10 @@ class Grok
       # File format is: NAME ' '+ PATTERN '\n'
       name, pattern = line.gsub(/^\s*/, "").split(/\s+/, 2)
       # If the line is malformed, skip it.
-      next if pattern.nil?
+      if pattern.nil?
+        debug { ["Malformed (NAME PATTERN) line", {:line => line, :path => path}] }
+        next
+      end
       # Trim newline and add the pattern.
       add_pattern(name, pattern.chomp)
     end
