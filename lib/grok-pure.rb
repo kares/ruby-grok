@@ -1,24 +1,19 @@
- require "rubygems"
 require "logger"
-require "cabin"
-require "grok/pure/discovery"
-require "grok/pure/match"
 
-# TODO(sissel): Check if 'grok' c-ext has been loaded and abort?
 class Grok
   class PatternError < StandardError; end
 
   # The pattern input
-  attr_accessor :pattern
+  attr_reader :pattern
 
   # The fully-expanded pattern (in regex form)
-  attr_accessor :expanded_pattern
+  attr_reader :expanded_pattern
+
+  # The dictionary of pattern names to pattern expressions
+  attr_reader :patterns
 
   # The logger
   attr_accessor :logger
-
-  # The dictionary of pattern names to pattern expressions
-  attr_accessor :patterns
 
   PATTERN_RE = \
     /%\{    # match '%{' not prefixed with '\'
@@ -48,18 +43,16 @@ class Grok
   public
   def initialize
     @patterns = {}
-    @logger = Cabin::Channel.new
-    @logger.subscribe(Logger.new(STDOUT))
-    @logger.level = :warn
+    @logger = NullLogger::INSTANCE
+    @pattern = nil
+    @expanded_pattern = nil
     # Captures Lambda which is generated at Grok compile time and called at match time
     @captures_func = nil
-
-    # TODO(sissel): Throw exception if we aren't using Ruby 1.9.2 or newer.
   end # def initialize
 
   public
   def add_pattern(name, pattern)
-    @logger.debug("Adding pattern", name => pattern)
+    trace { "Adding pattern #{name} => #{pattern.inspect}" }
     @patterns[name] = pattern
     return nil
   end # def add_pattern
@@ -72,7 +65,6 @@ class Grok
       next if line =~ /^\s*#/
       # File format is: NAME ' '+ PATTERN '\n'
       name, pattern = line.gsub(/^\s*/, "").split(/\s+/, 2)
-      #p name => pattern
       # If the line is malformed, skip it.
       next if pattern.nil?
       # Trim newline and add the pattern.
@@ -80,7 +72,7 @@ class Grok
     end
     return nil
   ensure
-    file.close
+    file && file.close
   end # def add_patterns_from_file
 
   public
@@ -125,8 +117,7 @@ class Grok
     end
 
     @regexp = Regexp.new(@expanded_pattern, Regexp::MULTILINE)
-    @logger.debug? and @logger.debug("Grok compiled OK", :pattern => pattern,
-                                     :expanded_pattern => @expanded_pattern)
+    debug { ["Grok compiled OK", {:pattern => pattern, :expanded_pattern => @expanded_pattern}] }
 
     @captures_func = compile_captures_func(@regexp)
   end
@@ -164,8 +155,7 @@ class Grok
       grokmatch.subject = text
       grokmatch.grok = self
       grokmatch.match = match
-      @logger.debug? and @logger.debug("Regexp match object", :names => match.names,
-                                       :captures => match.captures)
+      debug { ["Regexp match object", {:names => match.names, :captures => match.captures}] }
       return grokmatch
     else
       return false
@@ -189,8 +179,7 @@ class Grok
   def match_and_capture(text)
     match = execute(text)
     if match
-      @logger.debug? and @logger.debug("Regexp match object", :names => match.names,
-                                       :captures => match.captures)
+      debug { ["Regexp match object", {:names => match.names, :captures => match.captures}] }
       capture(match) {|k,v| yield k,v}
       return true
     else
@@ -198,22 +187,69 @@ class Grok
     end
   end # def match_and_capture
 
-  def capture(match, &block)    
+  def capture(match, &block)
     @captures_func.call(match,&block)
   end # def capture
 
-  public
-  def discover(input)
-    init_discover if @discover == nil
+  class Match
+    attr_accessor :subject
+    attr_accessor :grok
+    attr_accessor :match
 
-    return @discover.discover(input)
-  end # def discover
+    public
+    def initialize
+      @captures = nil
+    end
+
+    public
+    def each_capture(&block)
+      @grok.capture(@match, &block)
+    end # def each_capture
+
+    public
+    def captures
+      if @captures.nil?
+        @captures = Hash.new { |h,k| h[k] = [] }
+        each_capture do |key, val|
+          @captures[key] << val
+        end
+      end
+      return @captures
+    end # def captures
+
+    public
+    def [](name)
+      return captures[name]
+    end # def []
+  end # Grok::Match
 
   private
-  def init_discover
-    require "grok/pure/discovery"
-    @discover = Grok::Discovery.new(self)
-    @discover.logger = @logger
-  end # def init_discover
+
+  def trace(&block)
+    if @logger.respond_to?(:trace)
+      return unless @logger.trace?
+      @logger.trace Array(yield).join(' ')
+    else
+      return unless @logger.debug?
+      @logger.debug Array(yield).join(' ')
+    end
+  end
+
+  def debug(&block)
+    return unless @logger.debug?
+    @logger.debug Array(yield).join(' ')
+  end
+
+  class NullLogger < Logger
+
+    def initialize
+      super(File::NULL)
+      self.level = 5 # Severity::UNKNOWN
+    end
+
+    INSTANCE = self.new
+
+  end
+  private_constant :NullLogger
 
 end # Grok
