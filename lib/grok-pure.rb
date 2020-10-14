@@ -110,7 +110,7 @@ class Grok
         # See this gist for more details: https://gist.github.com/1491437
         # This hack should resolve LOGSTASH-226.
         @expanded_pattern.sub!(m[0]) { |s| replacement_pattern }
-        @logger.debug? and @logger.debug("replacement_pattern => #{replacement_pattern}")
+        trace { "replacement_pattern => #{replacement_pattern.inspect}" }
       else
         raise PatternError, "pattern #{m[0]} not defined"
       end
@@ -188,7 +188,7 @@ class Grok
   end # def match_and_capture
 
   def capture(match, &block)
-    @captures_func.call(match,&block)
+    @captures_func.call(match, &block)
   end # def capture
 
   class Match
