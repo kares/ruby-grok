@@ -196,17 +196,14 @@ class Grok
     attr_accessor :grok
     attr_accessor :match
 
-    public
     def initialize
       @captures = nil
     end
 
-    public
     def each_capture(&block)
       @grok.capture(@match, &block)
     end # def each_capture
 
-    public
     def captures
       if @captures.nil?
         @captures = Hash.new { |h,k| h[k] = [] }
@@ -217,7 +214,6 @@ class Grok
       return @captures
     end # def captures
 
-    public
     def [](name)
       return captures[name]
     end # def []
@@ -248,6 +244,10 @@ class Grok
     end
 
     INSTANCE = self.new
+
+    def level=(severity)
+      raise "can not change level (severity) for null-logger"
+    end
 
   end
   private_constant :NullLogger
