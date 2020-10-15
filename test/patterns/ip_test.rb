@@ -10,8 +10,7 @@ class IPPatternsTest < Test::Unit::TestCase
     @grok.compile("%{IP}")
     File.open("#{File.dirname(__FILE__)}/../fixtures/ip.input").each do |line|
       line.chomp!
-      match = @grok.match(line)
-      assert_not_equal(false, match)
+      assert match = @grok.match(line)
       assert_equal(line, match.captures["IP"][0])
     end
   end
@@ -22,8 +21,7 @@ class IPPatternsTest < Test::Unit::TestCase
                 1..3.4.5 hello world}
     nonips << "hello world"
     nonips.each do |input|
-      match = @grok.match(input)
-      assert_equal(false, match)
+      assert_nil @grok.match(input)
     end
   end
 end

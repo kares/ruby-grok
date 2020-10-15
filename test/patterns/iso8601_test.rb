@@ -26,8 +26,7 @@ class ISO8601PatternsTest < Test::Unit::TestCase
       "2001-12-07T23:54:60.123456Z", # '60' second is a leap second.
     ]
     times.each do |time|
-      match = @grok.match(time)
-      assert_not_equal(false, match, "Expected #{time} to match TIMESTAMP_ISO8601")
+      assert match = @grok.match(time)
       assert_equal(time, match.captures["TIMESTAMP_ISO8601"][0])
     end
   end
@@ -59,7 +58,7 @@ class ISO8601PatternsTest < Test::Unit::TestCase
     ]
     times.each do |time|
       match = @grok.match(time)
-      assert_equal(false, match, "Expected #{time} to not match TIMESTAMP_ISO8601")
+      assert_nil(match, "Expected #{time} to not match TIMESTAMP_ISO8601")
     end
   end
 

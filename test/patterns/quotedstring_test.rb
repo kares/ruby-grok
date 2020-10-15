@@ -13,8 +13,7 @@ class QuotedStringPatternsTest < Test::Unit::TestCase
     inputs.each do |value|
       quotes.each do |quote|
         str = "#{quote}#{value}#{quote}"
-        match = @grok.match(str)
-        assert_not_equal(false, match)
+        assert match = @grok.match(str)
         assert_equal(str, match.captures["QUOTEDSTRING"][0])
       end
     end
@@ -25,8 +24,7 @@ class QuotedStringPatternsTest < Test::Unit::TestCase
     quotes = %w{" ' `}
     quotes.each do |quote|
       str = "#{quote}hello \\#{quote}world\\#{quote}#{quote}"
-      match = @grok.match(str)
-      assert_not_equal(false, match)
+      assert match = @grok.match(str)
       assert_equal(str, match.captures["QUOTEDSTRING"][0])
     end
   end
@@ -35,8 +33,7 @@ class QuotedStringPatternsTest < Test::Unit::TestCase
     @grok.compile("%{QUOTEDSTRING}")
     inputs = ["\\\"testing\\\"", "\\\'testing\\\'", "\\\`testing\\\`",]
     inputs.each do |value|
-      match = @grok.match(value)
-      assert_equal(false, match)
+      assert_nil @grok.match(value)
     end
   end
 
@@ -44,8 +41,7 @@ class QuotedStringPatternsTest < Test::Unit::TestCase
     @grok.compile("%{QUOTEDSTRING}")
     inputs = ["\\\"testing", "testing", "hello world ' something ` foo"]
     inputs.each do |value|
-      match = @grok.match(value)
-      assert_equal(false, match)
+      assert_nil @grok.match(value)
     end
   end
 end

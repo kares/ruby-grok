@@ -11,8 +11,7 @@ class DayPatternsTest < Test::Unit::TestCase
     days = %w{Mon Monday Tue Tuesday Wed Wednesday Thu Thursday Fri Friday
                 Sat Saturday Sun Sunday}
     days.each do |day|
-      match = @grok.match(day)
-      assert_not_equal(false, day, "Expected #{day} to match.")
+      assert match = @grok.match(day)
       assert_equal(day, match.captures["DAY"][0])
     end
   end

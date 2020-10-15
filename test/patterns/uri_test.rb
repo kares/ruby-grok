@@ -35,8 +35,7 @@ class URIPatternsTest < Test::Unit::TestCase
            ]
 
     urls.each do |url|
-      match = @grok.match(url)
-      assert_not_equal(false, match, "Expected this to match: #{url}")
+      assert match = @grok.match(url)
       assert_equal(url, match.captures["URI"][0])
     end
   end

@@ -11,8 +11,7 @@ class PathPatternsTest < Test::Unit::TestCase
     paths = %w{/ /usr /usr/bin /usr/bin/foo /etc/motd /home/.test
                /foo/bar//baz //testing /.test /%foo% /asdf/asdf,v}
     paths.each do |path|
-      match = @grok.match(path)
-      assert_not_equal(false, match)
+      assert match = @grok.match(path)
       assert_equal(path, match.captures["PATH"][0])
     end
   end
@@ -21,8 +20,7 @@ class PathPatternsTest < Test::Unit::TestCase
     paths = %w{C:\WINDOWS \\\\Foo\bar \\\\1.2.3.4\C$ \\\\some\path\here.exe}
     paths << "C:\\Documents and Settings\\"
     paths.each do |path|
-      match = @grok.match(path)
-      assert_not_equal(false, match, "Expected #{path} to match, but it didn't.")
+      assert match = @grok.match(path)
       assert_equal(path, match.captures["PATH"][0])
     end
   end

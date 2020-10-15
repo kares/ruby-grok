@@ -142,14 +142,8 @@ class Grok
   def match(text)
     match = @regexp.match(text)
     if match
-      grokmatch = Grok::Match.new
-      grokmatch.subject = text
-      grokmatch.grok = self
-      grokmatch.match = match
       debug { ["Regexp match object", {:names => match.names, :captures => match.captures}] }
-      return grokmatch
-    else
-      return false
+      Grok::Match.new(self, match, text)
     end
   end # def match
 
@@ -171,7 +165,7 @@ class Grok
     match = execute(text)
     if match
       debug { ["Regexp match object", {:names => match.names, :captures => match.captures}] }
-      capture(match) {|k,v| yield k,v}
+      capture(match) { |k,v| yield k,v }
       return true
     else
       return false
@@ -183,11 +177,14 @@ class Grok
   end # def capture
 
   class Match
-    attr_accessor :subject
-    attr_accessor :grok
-    attr_accessor :match
+    attr_reader :subject
+    attr_reader :grok
+    attr_reader :match
 
-    def initialize
+    def initialize(grok, match, subject)
+      @grok = grok
+      @match = match
+      @subject = subject
       @captures = nil
     end
 
@@ -197,10 +194,11 @@ class Grok
 
     def captures
       if @captures.nil?
-        @captures = Hash.new { |h,k| h[k] = [] }
+        captures = Hash.new { |h,k| h[k] = [] }
         each_capture do |key, val|
-          @captures[key] << val
+          captures[key] << val
         end
+        @captures = captures
       end
       return @captures
     end # def captures

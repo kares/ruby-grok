@@ -13,8 +13,7 @@ class MonthPatternsTest < Test::Unit::TestCase
               "Sep", "September", "Oct", "October", "Nov", "November", "Dec",
               "December"]
     months.each do |month|
-      match = @grok.match(month)
-      assert_not_equal(false, match, "Expected #{month} to match")
+      assert match = @grok.match(month)
       assert_equal(month, match.captures["MONTH"][0])
     end
   end
